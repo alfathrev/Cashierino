@@ -52,8 +52,11 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server (only in standalone / local mode, not in Vercel serverless)
-if (process.env.VERCEL !== '1') {
+// Start server (only when run directly via node src/server.js in local development)
+const isDirectRun = process.argv[1] && (process.argv[1].endsWith('server.js') || process.argv[1].endsWith('server'));
+const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.LAMBDA_TASK_ROOT;
+
+if (isDirectRun && !isServerless) {
   async function startServer() {
     try {
       await initDbConnection();
@@ -65,7 +68,6 @@ if (process.env.VERCEL !== '1') {
       });
     } catch (error) {
       console.error('❌ Failed to start server:', error);
-      process.exit(1);
     }
   }
 
