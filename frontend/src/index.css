@@ -1,0 +1,184 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Default: Coral / Warm Rose Soft */
+  --theme-primary: #FF4365;
+  --theme-primary-hover: #E83152;
+  --theme-primary-light: #FFF0F3;
+  --theme-primary-subtle: #FFF8F9;
+  --theme-border: #FFD4DC;
+  --theme-ring: rgba(255, 67, 101, 0.2);
+  --theme-shadow: rgba(255, 67, 101, 0.25);
+  --theme-gradient: linear-gradient(135deg, #FF4365 0%, #FF6B8B 100%);
+}
+
+[data-theme="soft-blue"] {
+  --theme-primary: #3B82F6;
+  --theme-primary-hover: #2563EB;
+  --theme-primary-light: #EFF6FF;
+  --theme-primary-subtle: #F8FAFC;
+  --theme-border: #BFDBFE;
+  --theme-ring: rgba(59, 130, 246, 0.2);
+  --theme-shadow: rgba(59, 130, 246, 0.25);
+  --theme-gradient: linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%);
+}
+
+[data-theme="soft-purple"] {
+  --theme-primary: #8B5CF6;
+  --theme-primary-hover: #7C3AED;
+  --theme-primary-light: #F5F3FF;
+  --theme-primary-subtle: #FAF5FF;
+  --theme-border: #DDD6FE;
+  --theme-ring: rgba(139, 92, 246, 0.2);
+  --theme-shadow: rgba(139, 92, 246, 0.25);
+  --theme-gradient: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+}
+
+[data-theme="soft-green"] {
+  --theme-primary: #10B981;
+  --theme-primary-hover: #059669;
+  --theme-primary-light: #ECFDF5;
+  --theme-primary-subtle: #F0FDF4;
+  --theme-border: #A7F3D0;
+  --theme-ring: rgba(16, 185, 129, 0.2);
+  --theme-shadow: rgba(16, 185, 129, 0.25);
+  --theme-gradient: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+}
+
+[data-theme="soft-orange"] {
+  --theme-primary: #F97316;
+  --theme-primary-hover: #EA580C;
+  --theme-primary-light: #FFF7ED;
+  --theme-primary-subtle: #FFFAF5;
+  --theme-border: #FED7AA;
+  --theme-ring: rgba(249, 115, 22, 0.2);
+  --theme-shadow: rgba(249, 115, 22, 0.25);
+  --theme-gradient: linear-gradient(135deg, #F97316 0%, #FB923C 100%);
+}
+
+[data-theme="soft-yellow"] {
+  --theme-primary: #F59E0B;
+  --theme-primary-hover: #D97706;
+  --theme-primary-light: #FFFBEB;
+  --theme-primary-subtle: #FFFDF7;
+  --theme-border: #FDE68A;
+  --theme-ring: rgba(245, 158, 11, 0.2);
+  --theme-shadow: rgba(245, 158, 11, 0.25);
+  --theme-gradient: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%);
+}
+
+[data-theme="coral"] {
+  --theme-primary: #FF4365;
+  --theme-primary-hover: #E83152;
+  --theme-primary-light: #FFF0F3;
+  --theme-primary-subtle: #FFF8F9;
+  --theme-border: #FFD4DC;
+  --theme-ring: rgba(255, 67, 101, 0.2);
+  --theme-shadow: rgba(255, 67, 101, 0.25);
+  --theme-gradient: linear-gradient(135deg, #FF4365 0%, #FF6B8B 100%);
+}
+
+/* Global Smooth Transitions */
+* {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, box-shadow, transform, opacity;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  transition-duration: 220ms;
+}
+
+/* Soft Keyframe Animations */
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.92) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  0% {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes popBadge {
+  0% {
+    transform: scale(0.5);
+  }
+  60% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-modal {
+  animation: fadeInScale 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-pop {
+  animation: popBadge 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #E2E8F0;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #CBD5E1;
+}
+
+/* Print styles for receipt */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-receipt, #printable-receipt * {
+    visibility: visible;
+  }
+  #printable-receipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80mm;
+    margin: 0;
+    padding: 10px;
+  }
+}
