@@ -1,4 +1,4 @@
-const rawUrl = (import.meta.env.VITE_API_URL || 'https://cashierinobe.vercel.app').trim();
+const rawUrl = ((import.meta as any).env?.VITE_API_URL || 'https://cashierinobe.vercel.app').trim();
 const API_BASE = rawUrl.replace(/\/api\/?$/i, '').replace(/\/+$/, '');
 
 function getHeaders(includeAuth = true) {

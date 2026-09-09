@@ -197,9 +197,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             <button
               type="button"
               onClick={handleProcessPayment}
-              disabled={isSubmitting || (paymentMethod === 'Cash' && !isExactOrMore)}
+              disabled={isSubmitting || !isExactOrMore}
               className={`w-2/3 py-3 rounded-2xl font-black text-xs text-white shadow-btn flex items-center justify-center gap-2 transition-all ${
-                isSubmitting || (paymentMethod === 'Cash' && !isExactOrMore)
+                isSubmitting || !isExactOrMore
                   ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
                   : 'bg-theme-primary hover:bg-theme-primary-hover active:scale-[0.98]'
               }`}
