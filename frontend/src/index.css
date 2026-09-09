@@ -165,20 +165,44 @@
   background: #CBD5E1;
 }
 
-/* Print styles for receipt */
+/* Print styles for thermal receipt */
 @media print {
+  @page {
+    margin: 0;
+    size: auto;
+  }
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    font-family: monospace, ui-monospace, sans-serif !important;
+    font-size: 12px !important;
+  }
+
   body * {
     visibility: hidden;
   }
-  #printable-receipt, #printable-receipt * {
+
+  #printable-receipt-area,
+  #printable-receipt-area * {
     visibility: visible;
   }
-  #printable-receipt {
-    position: absolute;
+
+  #printable-receipt-area {
+    position: fixed;
     left: 0;
     top: 0;
-    width: 80mm;
-    margin: 0;
-    padding: 10px;
+    width: 100% !important;
+    max-width: 80mm !important;
+    margin: 0 auto !important;
+    padding: 10px !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    border: none !important;
   }
 }

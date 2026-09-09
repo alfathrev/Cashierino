@@ -12,7 +12,8 @@ import { PaymentModal } from './components/PaymentModal';
 import { ReceiptModal } from './components/ReceiptModal';
 import { BillsView } from './components/BillsView';
 import { SettingsModal } from './components/SettingsModal';
-import { ProductCrudModal } from './components/ProductCrudModal';
+import { ProductManagementView } from './components/ProductManagementView';
+import { ProductFormModal } from './components/ProductFormModal';
 import { fetchProductsApi } from './services/api';
 import { Product, Transaction, Category } from './types';
 import { ShoppingBag, ArrowRight } from 'lucide-react';
@@ -35,7 +36,8 @@ export const App: React.FC = () => {
   // Modals state
   const [isPaymentOpen, setIsPaymentOpen] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
-  const [isProductCrudOpen, setIsProductCrudOpen] = useState<boolean>(false);
+  const [isProductFormOpen, setIsProductFormOpen] = useState<boolean>(false);
+  const [productToEdit, setProductToEdit] = useState<Product | null>(null);
   const [activeReceipt, setActiveReceipt] = useState<Transaction | null>(null);
 
   // Responsive Tablet/Mobile Cart Drawer State
@@ -81,11 +83,19 @@ export const App: React.FC = () => {
   const handleSelectView = (view: NavView) => {
     if (view === 'settings') {
       setIsSettingsOpen(true);
-    } else if (view === 'products') {
-      setIsProductCrudOpen(true);
     } else {
       setCurrentView(view);
     }
+  };
+
+  const handleOpenAddProduct = () => {
+    setProductToEdit(null);
+    setIsProductFormOpen(true);
+  };
+
+  const handleEditProduct = (prod: Product) => {
+    setProductToEdit(prod);
+    setIsProductFormOpen(true);
   };
 
   // If not authenticated, render Login Form
@@ -128,7 +138,7 @@ export const App: React.FC = () => {
                   isLoading={isLoadingProducts}
                   sortBy={sortBy}
                   onSortChange={setSortBy}
-                  onOpenAddProduct={() => setIsProductCrudOpen(true)}
+                  onOpenAddProduct={handleOpenAddProduct}
                 />
               </div>
             </main>
@@ -185,6 +195,14 @@ export const App: React.FC = () => {
               </div>
             )}
           </>
+        ) : currentView === 'products' ? (
+          <ProductManagementView
+            products={products}
+            isLoading={isLoadingProducts}
+            onRefreshProducts={loadProducts}
+            onOpenAddProduct={handleOpenAddProduct}
+            onEditProduct={handleEditProduct}
+          />
         ) : currentView === 'transactions' ? (
           <BillsView onViewReceipt={(trans) => setActiveReceipt(trans)} />
         ) : null}
@@ -211,15 +229,19 @@ export const App: React.FC = () => {
         onClose={() => setIsSettingsOpen(false)}
       />
 
-      {/* 6. Pop-up CRUD Tambah & Kelola Produk (Makanan / Minuman) */}
-      <ProductCrudModal
-        isOpen={isProductCrudOpen}
-        onClose={() => setIsProductCrudOpen(false)}
-        products={products}
-        onRefreshProducts={loadProducts}
+      {/* 6. Pop-up Add / Edit Product Form Modal */}
+      <ProductFormModal
+        isOpen={isProductFormOpen}
+        onClose={() => {
+          setIsProductFormOpen(false);
+          setProductToEdit(null);
+        }}
+        productToEdit={productToEdit}
+        onSuccess={loadProducts}
       />
     </div>
   );
 };
 
 export default App;
+

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, PlusCircle, Receipt, Settings, LogOut } from 'lucide-react';
+import { Home, Package, Receipt, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export type NavView = 'home' | 'products' | 'transactions' | 'settings';
@@ -14,7 +14,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onSelectView }) =
 
   const navItems: Array<{ id: NavView; label: string; icon: React.ReactNode }> = [
     { id: 'home', label: 'Home', icon: <Home className="w-5 h-5 stroke-[2.2]" /> },
-    { id: 'products', label: 'Produk', icon: <PlusCircle className="w-5 h-5 stroke-[2.2]" /> },
+    { id: 'products', label: 'Produk', icon: <Package className="w-5 h-5 stroke-[2.2]" /> },
     { id: 'transactions', label: 'Transaksi', icon: <Receipt className="w-5 h-5 stroke-[2]" /> },
     { id: 'settings', label: 'Pengaturan', icon: <Settings className="w-5 h-5 stroke-[2]" /> },
   ];
@@ -54,7 +54,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onSelectView }) =
 
               {/* Tooltip on Hover */}
               <span className="hidden sm:block absolute left-full ml-3 px-2.5 py-1 bg-slate-800 text-white text-[11px] font-medium rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 shadow-md whitespace-nowrap z-40">
-                {item.id === 'products' ? 'Tambah & Kelola Produk' : item.label}
+                {item.id === 'products' ? 'Daftar & Kelola Menu' : item.label}
               </span>
             </button>
           );
