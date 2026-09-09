@@ -1,0 +1,7 @@
+﻿{
+  "name": "cashierino",
+  "private": true,
+  "scripts": {
+    "build": "npm run --prefix frontend build"
+  }
+}
