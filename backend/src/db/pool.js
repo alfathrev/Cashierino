@@ -1,5 +1,4 @@
 import pg from 'pg';
-import sqlite3 from 'sqlite3';
 import path from 'path';
 import fs from 'fs';
 import dotenv from 'dotenv';
@@ -12,48 +11,60 @@ const { Pool } = pg;
 let activeEngine = 'neon'; // 'neon' | 'sqlite'
 let pgPool = null;
 let sqliteDb = null;
-
-// Ensure data directory exists for local fallback
-const dataDir = path.resolve('data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
-const sqlitePath = path.join(dataDir, 'pos_database.sqlite');
+let initPromise = null;
 
 export async function initDbConnection() {
-  console.log('📡 Testing connection to Neon DB (PostgreSQL Serverless)...');
-  
-  if (process.env.DATABASE_URL) {
-    try {
-      const testPool = new Pool({
-        connectionString: process.env.DATABASE_URL,
-        ssl: { rejectUnauthorized: false },
-        connectionTimeoutMillis: 5000,
-      });
+  if (initPromise) return initPromise;
 
-      // Probe query
-      await testPool.query('SELECT 1');
-      console.log('✅ Connected successfully to Neon DB cloud instance!');
-      pgPool = testPool;
-      activeEngine = 'neon';
-      await initPostgresSchema();
-      return;
-    } catch (err) {
-      console.warn('⚠️ Neon DB connection notice:', err.message);
-      console.warn('⚡ Using high-performance local SQLite storage (data/pos_database.sqlite) so CashierIno runs 100% reliably out of the box.');
+  initPromise = (async () => {
+    console.log('📡 Testing connection to Neon DB (PostgreSQL Serverless)...');
+    
+    if (process.env.DATABASE_URL) {
+      try {
+        const testPool = new Pool({
+          connectionString: process.env.DATABASE_URL,
+          ssl: { rejectUnauthorized: false },
+          connectionTimeoutMillis: 10000,
+        });
+
+        // Probe query
+        await testPool.query('SELECT 1');
+        console.log('✅ Connected successfully to Neon DB cloud instance!');
+        pgPool = testPool;
+        activeEngine = 'neon';
+        await initPostgresSchema();
+        return;
+      } catch (err) {
+        console.warn('⚠️ Neon DB connection notice:', err.message);
+        console.warn('⚡ Using fallback storage...');
+      }
     }
-  }
 
-  // Fallback to SQLite
-  activeEngine = 'sqlite';
-  await new Promise((resolve, reject) => {
-    sqliteDb = new sqlite3.Database(sqlitePath, (err) => {
-      if (err) reject(err);
-      else resolve();
-    });
-  });
-  console.log(`💾 Local database ready at: ${sqlitePath}`);
-  await initSqliteSchema();
+    // Fallback to SQLite (only in local environments)
+    try {
+      const dataDir = path.resolve('data');
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+      const sqlitePath = path.join(dataDir, 'pos_database.sqlite');
+      const sqlite3Module = await import('sqlite3');
+      const sqlite3 = sqlite3Module.default || sqlite3Module;
+      
+      activeEngine = 'sqlite';
+      await new Promise((resolve, reject) => {
+        sqliteDb = new sqlite3.Database(sqlitePath, (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+      console.log(`💾 Local database ready at: ${sqlitePath}`);
+      await initSqliteSchema();
+    } catch (sqliteErr) {
+      console.error('❌ Database initialization failed:', sqliteErr);
+    }
+  })();
+
+  return initPromise;
 }
 
 function convertPgToSqlite(sql) {
@@ -71,6 +82,10 @@ function convertPgToSqlite(sql) {
 }
 
 export async function query(sqlText, params = []) {
+  if (!pgPool && !sqliteDb) {
+    await initDbConnection();
+  }
+
   if (activeEngine === 'neon' && pgPool) {
     return pgPool.query(sqlText, params);
   }

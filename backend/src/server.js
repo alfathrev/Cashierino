@@ -25,7 +25,16 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/transactions', transactionRoutes);
 
-// Health check
+// Root & Health check
+app.get('/', (req, res) => {
+  res.json({
+    status: 'online',
+    system: 'CashierIno POS Backend REST API',
+    database: 'Neon DB (PostgreSQL)',
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
@@ -43,22 +52,28 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
-async function startServer() {
-  try {
-    await initDbConnection();
-    // Auto-cleanup transactions older than 30 days on startup
-    await cleanupOldTransactions();
-    // Run daily cleanup
-    setInterval(cleanupOldTransactions, 24 * 60 * 60 * 1000);
+// Auto-initialize DB for serverless environments
+initDbConnection().catch(console.error);
 
-    app.listen(PORT, () => {
-      console.log(`🚀 CashierIno Backend Server running on http://localhost:${PORT}`);
-    });
-  } catch (error) {
-    console.error('❌ Failed to start server:', error);
-    process.exit(1);
+// Start server (only in standalone / local mode, not in Vercel serverless)
+if (process.env.VERCEL !== '1') {
+  async function startServer() {
+    try {
+      await initDbConnection();
+      await cleanupOldTransactions();
+      setInterval(cleanupOldTransactions, 24 * 60 * 60 * 1000);
+
+      app.listen(PORT, () => {
+        console.log(`🚀 CashierIno Backend Server running on http://localhost:${PORT}`);
+      });
+    } catch (error) {
+      console.error('❌ Failed to start server:', error);
+      process.exit(1);
+    }
   }
+
+  startServer();
 }
 
-startServer();
+export default app;
+
