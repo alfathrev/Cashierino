@@ -7,16 +7,12 @@ import { useCart } from '../context/CartContext';
 interface ProductGridProps {
   products: Product[];
   isLoading: boolean;
-  sortBy: string;
-  onSortChange: (sort: string) => void;
   onOpenAddProduct?: () => void;
 }
 
 export const ProductGrid: React.FC<ProductGridProps> = ({
   products,
   isLoading,
-  sortBy,
-  onSortChange,
   onOpenAddProduct,
 }) => {
   const { cart, addToCart } = useCart();
@@ -28,45 +24,6 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
 
   return (
     <div className="flex-1 flex flex-col">
-      {/* Subheader: Choose Order & Sort By */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-xl font-black text-slate-800 tracking-tight">
-            Choose Order
-          </h2>
-          <span className="text-xs font-semibold text-slate-400">
-            {products.length} menu siap dipesan
-          </span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="relative inline-flex items-center bg-white border border-slate-200/80 px-3 py-1.5 rounded-xl shadow-xs">
-            <span className="text-xs font-semibold text-slate-400 mr-2">Urutkan:</span>
-            <select
-              value={sortBy}
-              onChange={(e) => onSortChange(e.target.value)}
-              className="appearance-none bg-transparent pr-6 pl-1 py-0.5 text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
-            >
-              <option value="popular">Terpopuler</option>
-              <option value="price-asc">Harga Termurah</option>
-              <option value="price-desc">Harga Tertinggi</option>
-              <option value="name">Nama Menu</option>
-            </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 pointer-events-none" />
-          </div>
-
-          {onOpenAddProduct && (
-            <button
-              onClick={onOpenAddProduct}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-theme-primary-light hover:bg-theme-border text-theme-primary font-bold text-xs transition-colors"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>Tambah Menu</span>
-            </button>
-          )}
-        </div>
-      </div>
-
       {/* Grid Content */}
       {isLoading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">

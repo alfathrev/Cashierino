@@ -1,11 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from './context/AuthContext';
 import { useCart } from './context/CartContext';
 import { useTheme } from './context/ThemeContext';
 import { LoginForm } from './components/LoginForm';
 import { Sidebar, NavView } from './components/Sidebar';
-import { HeaderSearch } from './components/HeaderSearch';
-import { CategoryFilter } from './components/CategoryFilter';
 import { ProductGrid } from './components/ProductGrid';
 import { OrderCart } from './components/OrderCart';
 import { PaymentModal } from './components/PaymentModal';
@@ -15,7 +13,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { ProductManagementView } from './components/ProductManagementView';
 import { ProductFormModal } from './components/ProductFormModal';
 import { fetchProductsApi } from './services/api';
-import { Product, Transaction, Category } from './types';
+import { Product, Transaction } from './types';
 import { ShoppingBag, ArrowRight } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -26,12 +24,9 @@ export const App: React.FC = () => {
   // Navigation state: 'home' | 'products' | 'transactions' | 'settings'
   const [currentView, setCurrentView] = useState<NavView>('home');
 
-  // Products & Filter state
+  // Products state
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState<boolean>(true);
-  const [search, setSearch] = useState<string>('');
-  const [selectedCategory, setSelectedCategory] = useState<Category | 'All'>('All');
-  const [sortBy, setSortBy] = useState<string>('popular');
 
   // Modals state
   const [isPaymentOpen, setIsPaymentOpen] = useState<boolean>(false);
@@ -47,11 +42,7 @@ export const App: React.FC = () => {
   const loadProducts = async () => {
     setIsLoadingProducts(true);
     try {
-      const res = await fetchProductsApi({
-        category: selectedCategory,
-        search,
-        sort: sortBy,
-      });
+      const res = await fetchProductsApi();
       if (res.success && Array.isArray(res.products)) {
         setProducts(res.products);
       }
@@ -66,18 +57,7 @@ export const App: React.FC = () => {
     if (isAuthenticated) {
       loadProducts();
     }
-  }, [isAuthenticated, selectedCategory, search, sortBy]);
-
-  // Count items for category pills
-  const { allCount, makananCount, minumanCount } = useMemo(() => {
-    const makanan = products.filter((p) => p.category === 'Makanan').length;
-    const minuman = products.filter((p) => p.category === 'Minuman').length;
-    return {
-      allCount: products.length,
-      makananCount: makanan,
-      minumanCount: minuman,
-    };
-  }, [products]);
+  }, [isAuthenticated]);
 
   // Handle Sidebar view clicks
   const handleSelectView = (view: NavView) => {
@@ -114,30 +94,38 @@ export const App: React.FC = () => {
           <>
             {/* Center Area: Catalog & Grid - Takes Full Width on Tablet/Mobile */}
             <main className="flex-1 flex flex-col p-4 sm:p-6 lg:p-8 overflow-y-auto no-scrollbar min-w-0 pb-24 xl:pb-8">
-              {/* Header with Search Bar & Mobile Cart Toggle */}
-              <HeaderSearch
-                search={search}
-                onSearchChange={setSearch}
-                onOpenCartMobile={() => setIsCartOpenMobile(true)}
-                cartItemCount={itemCount}
-              />
+              {/* Mobile / Tablet Header Bar with Cart Toggle */}
+              <div className="xl:hidden flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+                <div>
+                  <h1 className="text-xl font-black text-slate-800 tracking-tight">
+                    Ino Yummy
+                  </h1>
+                  <span className="text-[11px] font-semibold text-slate-400">
+                    Menu Kasir
+                  </span>
+                </div>
 
-              {/* Strict Category Filter */}
-              <CategoryFilter
-                selectedCategory={selectedCategory}
-                onSelectCategory={setSelectedCategory}
-                allCount={allCount}
-                makananCount={makananCount}
-                minumanCount={minumanCount}
-              />
+                <button
+                  type="button"
+                  onClick={() => setIsCartOpenMobile(true)}
+                  className="relative flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-theme-primary text-white font-black text-xs shadow-btn active:scale-95 transition-all"
+                  title="Buka Keranjang Pesanan"
+                >
+                  <ShoppingBag className="w-4 h-4 stroke-[2.5]" />
+                  <span>Pesanan</span>
+                  {itemCount > 0 && (
+                    <span className="w-5 h-5 rounded-full bg-white text-theme-primary flex items-center justify-center text-[10px] font-black shadow-xs">
+                      {itemCount}
+                    </span>
+                  )}
+                </button>
+              </div>
 
-              {/* Product Cards Grid */}
-              <div className="mt-5 flex-1 flex flex-col">
+              {/* Product Cards Grid Directly */}
+              <div className="flex-1 flex flex-col">
                 <ProductGrid
                   products={products}
                   isLoading={isLoadingProducts}
-                  sortBy={sortBy}
-                  onSortChange={setSortBy}
                   onOpenAddProduct={handleOpenAddProduct}
                 />
               </div>
