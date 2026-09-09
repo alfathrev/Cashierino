@@ -52,9 +52,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Auto-initialize DB for serverless environments
-initDbConnection().catch(console.error);
-
 // Start server (only in standalone / local mode, not in Vercel serverless)
 if (process.env.VERCEL !== '1') {
   async function startServer() {
