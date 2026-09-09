@@ -1,4 +1,4 @@
-const API_BASE = (import.meta.env.VITE_API_URL || 'https://cashierinobe.vercel.app/api').replace(/\/$/, '');
+const API_BASE = (import.meta.env.VITE_API_URL || 'https://cashierinobe.vercel.app').replace(/\/$/, '');
 
 function getHeaders(includeAuth = true) {
   const headers: Record<string, string> = {
