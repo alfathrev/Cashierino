@@ -20,38 +20,7 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [cart, setCart] = useState<CartItem[]>([
-    {
-      product: {
-        id: 3,
-        name: 'Classic Cheese Burger',
-        category: 'Makanan',
-        price: 28000,
-        image_url: 'https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?w=400&auto=format&fit=crop&q=80',
-      },
-      quantity: 2
-    },
-    {
-      product: {
-        id: 2,
-        name: 'Double Cheese Burger',
-        category: 'Makanan',
-        price: 32000,
-        image_url: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=400&auto=format&fit=crop&q=80',
-      },
-      quantity: 1
-    },
-    {
-      product: {
-        id: 11,
-        name: 'Coffee Latte Creamy',
-        category: 'Minuman',
-        price: 22000,
-        image_url: 'https://images.unsplash.com/photo-1570968915860-54d5c301fa9f?w=400&auto=format&fit=crop&q=80',
-      },
-      quantity: 2
-    }
-  ]);
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [customerName, setCustomerName] = useState<string>('Pelanggan Walk-in');
   const { playSound } = useTheme();
 
