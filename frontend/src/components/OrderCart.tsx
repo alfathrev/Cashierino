@@ -179,7 +179,7 @@ export const OrderCart: React.FC<OrderCartProps> = ({ onOpenPayment, onCloseMobi
           </div>
         </div>
 
-        {/* Charge Button */}
+        {/* Bayar Button */}
         <button
           onClick={onOpenPayment}
           disabled={cart.length === 0}
@@ -189,7 +189,7 @@ export const OrderCart: React.FC<OrderCartProps> = ({ onOpenPayment, onCloseMobi
               : 'bg-theme-primary hover:bg-theme-primary-hover text-white active:scale-[0.98]'
           }`}
         >
-          Charge {formatMoney(totalAmount)}
+          Bayar {formatMoney(totalAmount)}
         </button>
       </div>
     </div>

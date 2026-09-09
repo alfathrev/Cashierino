@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { useTheme } from '../context/ThemeContext';
 import { UniversalNumpad } from './UniversalNumpad';
@@ -23,6 +23,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [cashInput, setCashInput] = useState<string>('0');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setCashInput('0');
+      setErrorMessage(null);
+    }
+  }, [isOpen]);
 
   const cashAmount = useMemo(() => {
     const parsed = parseInt(cashInput, 10);
