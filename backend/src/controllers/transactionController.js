@@ -41,9 +41,9 @@ export async function createTransaction(req, res) {
     }
 
     subtotal = Math.round(subtotal);
-    const taxRate = 5.00; // PB 5%
-    const taxAmount = Math.round(subtotal * 0.05);
-    const totalAmount = Math.round(subtotal + taxAmount);
+    const taxRate = 0.00; // Pajak dinonaktifkan (0%)
+    const taxAmount = 0;
+    const totalAmount = subtotal;
 
     const cashPaidNum = parseFloat(cash_paid);
     if (cashPaidNum < totalAmount) {

@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useCart } from '../context/CartContext';
 import { useTheme } from '../context/ThemeContext';
 import { UniversalNumpad } from './UniversalNumpad';
-import { X, CheckCircle2, AlertCircle, Banknote, QrCode, CreditCard } from 'lucide-react';
+import { X, CheckCircle2, AlertCircle } from 'lucide-react';
 import { createTransactionApi } from '../services/api';
 import { Transaction } from '../types';
 
@@ -17,11 +17,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   onClose,
   onSuccessTransaction,
 }) => {
-  const { cart, totalAmount, subtotal, taxAmount, taxRate, customerName, clearCart } = useCart();
+  const { cart, totalAmount, customerName, clearCart } = useCart();
   const { formatMoney, playSound } = useTheme();
 
   const [cashInput, setCashInput] = useState<string>('0');
-  const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'QRIS' | 'Debit'>('Cash');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -33,9 +32,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   // Smart Change Calculation in Rupiah
   const isExactOrMore = cashAmount >= totalAmount;
   const changeAmount = useMemo(() => {
-    if (paymentMethod !== 'Cash') return 0;
     return isExactOrMore ? cashAmount - totalAmount : 0;
-  }, [cashAmount, totalAmount, isExactOrMore, paymentMethod]);
+  }, [cashAmount, totalAmount, isExactOrMore]);
 
   const shortageAmount = useMemo(() => {
     return !isExactOrMore ? totalAmount - cashAmount : 0;
@@ -44,7 +42,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   if (!isOpen) return null;
 
   const handleProcessPayment = async () => {
-    if (paymentMethod === 'Cash' && cashAmount < totalAmount) {
+    if (cashAmount < totalAmount) {
       setErrorMessage(`Nominal pembayaran kurang ${formatMoney(shortageAmount)}`);
       return;
     }
@@ -59,8 +57,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           quantity: item.quantity,
         })),
         customer_name: customerName,
-        cash_paid: paymentMethod === 'Cash' ? cashAmount : totalAmount,
-        payment_method: paymentMethod,
+        cash_paid: cashAmount,
+        payment_method: 'Tunai',
       };
 
       const res = await createTransactionApi(payload);
@@ -87,21 +85,17 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         <div className="w-full md:w-5/12 bg-slate-50/80 p-6 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-100">
           <div>
             <div className="flex items-center justify-between mb-4">
-              <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">Pembayaran Kasir</span>
+              <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">Pembayaran</span>
               <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-200/80 text-slate-700">
                 {customerName}
               </span>
             </div>
 
             {/* Bill breakdown card */}
-            <div className="bg-white rounded-2xl p-4 border border-slate-200/70 shadow-2xs space-y-2">
+            <div className="bg-white rounded-2xl p-4 border border-slate-200/70 shadow-2xs space-y-3">
               <div className="flex justify-between text-xs text-slate-500 font-medium">
-                <span>Subtotal ({cart.length} menu)</span>
-                <span className="font-bold text-slate-700">{formatMoney(subtotal)}</span>
-              </div>
-              <div className="flex justify-between text-xs text-slate-500 font-medium">
-                <span>Pajak Resto ({taxRate}%)</span>
-                <span className="font-bold text-slate-700">{formatMoney(taxAmount)}</span>
+                <span>Total Item</span>
+                <span className="font-bold text-slate-700">{cart.length} menu</span>
               </div>
               <div className="border-t border-slate-100 pt-2 flex justify-between items-baseline">
                 <span className="text-xs font-black text-slate-700">Total Tagihan</span>
@@ -109,69 +103,36 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               </div>
             </div>
 
-            {/* Payment Method Selector */}
-            <div className="mt-4">
-              <label className="text-xs font-bold text-slate-600 block mb-2">Metode Pembayaran</label>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { id: 'Cash', label: 'Tunai', icon: <Banknote className="w-4 h-4" /> },
-                  { id: 'QRIS', label: 'QRIS', icon: <QrCode className="w-4 h-4" /> },
-                  { id: 'Debit', label: 'Debit', icon: <CreditCard className="w-4 h-4" /> },
-                ].map((m) => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => {
-                      setPaymentMethod(m.id as any);
-                      if (m.id !== 'Cash') {
-                        setCashInput(String(totalAmount));
-                      }
-                    }}
-                    className={`py-2 px-1 rounded-2xl text-xs font-bold flex flex-col items-center gap-1 border transition-all duration-200 ${
-                      paymentMethod === m.id
-                        ? 'bg-theme-primary text-white border-theme-primary shadow-xs'
-                        : 'bg-white text-slate-600 border-slate-200/80 hover:bg-slate-100'
-                    }`}
-                  >
-                    {m.icon}
-                    <span>{m.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Smart Change Calculation Box */}
-            {paymentMethod === 'Cash' && (
-              <div className="mt-4 space-y-2">
-                {isExactOrMore ? (
-                  <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-emerald-900 animate-slide-up">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700">
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Kembalian Otomatis:</span>
-                    </div>
-                    <div className="text-2xl font-black text-emerald-600 mt-1">
-                      {formatMoney(changeAmount)}
-                    </div>
-                    <p className="text-[11px] text-emerald-700 mt-0.5 font-medium">
-                      {changeAmount === 0 ? '✨ Uang pas diterima' : 'Berikan kembalian ke pelanggan'}
-                    </p>
+            <div className="mt-4 space-y-2">
+              {isExactOrMore ? (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-emerald-900 animate-slide-up">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Kembalian Otomatis:</span>
                   </div>
-                ) : (
-                  <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-amber-900 animate-slide-up">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-amber-700">
-                      <AlertCircle className="w-4 h-4" />
-                      <span>Uang Diterima Kurang:</span>
-                    </div>
-                    <div className="text-2xl font-black text-amber-600 mt-1">
-                      {formatMoney(shortageAmount)}
-                    </div>
-                    <p className="text-[11px] text-amber-700 mt-0.5 font-medium">
-                      Masukkan nominal yang cukup
-                    </p>
+                  <div className="text-2xl font-black text-emerald-600 mt-1">
+                    {formatMoney(changeAmount)}
                   </div>
-                )}
-              </div>
-            )}
+                  <p className="text-[11px] text-emerald-700 mt-0.5 font-medium">
+                    {changeAmount === 0 ? '✨ Uang pas diterima' : 'Berikan kembalian ke pelanggan'}
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-amber-900 animate-slide-up">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-amber-700">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>Uang Diterima Kurang:</span>
+                  </div>
+                  <div className="text-2xl font-black text-amber-600 mt-1">
+                    {formatMoney(shortageAmount)}
+                  </div>
+                  <p className="text-[11px] text-amber-700 mt-0.5 font-medium">
+                    Masukkan nominal yang cukup
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="hidden md:block mt-4 text-[11px] font-medium text-slate-400 bg-white p-2.5 rounded-2xl border border-slate-200/60 text-center">

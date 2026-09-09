@@ -94,22 +94,14 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ transaction, onClose
               ))}
             </div>
 
-            {/* Totals & Taxes */}
+            {/* Totals */}
             <div className="space-y-1 text-[11px]">
-              <div className="flex justify-between text-slate-600">
-                <span>Subtotal:</span>
-                <span>{formatMoney(transaction.subtotal)}</span>
-              </div>
-              <div className="flex justify-between text-slate-600">
-                <span>PB Resto ({transaction.tax_rate}%):</span>
-                <span>{formatMoney(transaction.tax_amount)}</span>
-              </div>
               <div className="flex justify-between text-sm font-black text-slate-900 pt-1 border-t border-dashed border-slate-200">
                 <span>TOTAL:</span>
                 <span>{formatMoney(transaction.total_amount)}</span>
               </div>
               <div className="flex justify-between text-slate-700 pt-1">
-                <span>Bayar ({transaction.payment_method}):</span>
+                <span>Uang Diterima:</span>
                 <span>{formatMoney(transaction.cash_paid)}</span>
               </div>
               <div className="flex justify-between text-sm font-black text-emerald-600">

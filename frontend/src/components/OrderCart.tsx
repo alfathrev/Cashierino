@@ -173,13 +173,9 @@ export const OrderCart: React.FC<OrderCartProps> = ({ onOpenPayment, onCloseMobi
       {/* Bill Calculation & Charge Button */}
       <div className="p-5 sm:p-6 bg-white border-t border-slate-100 space-y-4">
         <div className="space-y-2 text-sm">
-          <div className="flex items-center justify-between text-slate-500">
-            <span className="font-semibold text-xs">Sub Total</span>
-            <span className="font-black text-slate-800">{formatMoney(subtotal)}</span>
-          </div>
-          <div className="flex items-center justify-between text-slate-500">
-            <span className="font-semibold text-xs">PB Resto ({taxRate}%)</span>
-            <span className="font-black text-slate-800">{formatMoney(taxAmount)}</span>
+          <div className="flex items-center justify-between text-slate-700">
+            <span className="font-bold text-xs">Total Menu ({cart.length})</span>
+            <span className="font-black text-slate-900 text-sm">{formatMoney(totalAmount)}</span>
           </div>
         </div>
 

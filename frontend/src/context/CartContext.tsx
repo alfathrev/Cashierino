@@ -61,20 +61,18 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCart([]);
   };
 
-  const taxRate = 5.0; // PB (5%)
+  const taxRate = 0; // Pajak dinonaktifkan (0%)
 
   const subtotal = useMemo(() => {
     const raw = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
     return Math.round(raw);
   }, [cart]);
 
-  const taxAmount = useMemo(() => {
-    return Math.round(subtotal * 0.05);
-  }, [subtotal]);
+  const taxAmount = 0;
 
   const totalAmount = useMemo(() => {
-    return Math.round(subtotal + taxAmount);
-  }, [subtotal, taxAmount]);
+    return subtotal;
+  }, [subtotal]);
 
   const itemCount = useMemo(() => {
     return cart.reduce((acc, item) => acc + item.quantity, 0);
