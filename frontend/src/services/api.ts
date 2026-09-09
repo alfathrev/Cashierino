@@ -1,4 +1,5 @@
-const API_BASE = (import.meta.env.VITE_API_URL || 'https://cashierinobe.vercel.app').replace(/\/$/, '');
+const rawUrl = (import.meta.env.VITE_API_URL || 'https://cashierinobe.vercel.app').trim();
+const API_BASE = rawUrl.replace(/\/api\/?$/i, '').replace(/\/+$/, '');
 
 function getHeaders(includeAuth = true) {
   const headers: Record<string, string> = {
@@ -14,12 +15,20 @@ function getHeaders(includeAuth = true) {
 }
 
 export async function loginApi(credentials: { username: string; password: string }) {
-  const res = await fetch(`${API_BASE}/auth/login`, {
-    method: 'POST',
-    headers: getHeaders(false),
-    body: JSON.stringify(credentials),
-  });
-  return res.json();
+  try {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: getHeaders(false),
+      body: JSON.stringify(credentials),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data) {
+      return { success: false, message: data?.message || `Gagal terhubung ke server (${res.status})` };
+    }
+    return data;
+  } catch (err: any) {
+    return { success: false, message: 'Gagal terhubung ke server backend.' };
+  }
 }
 
 export async function fetchProductsApi(params?: {
