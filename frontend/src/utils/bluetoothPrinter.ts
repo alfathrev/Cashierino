@@ -80,78 +80,166 @@ export function generateEscPosReceipt(transaction: Transaction): Uint8Array {
   pushBytes(0x1B, 0x61, 0x01); // Center
   pushText('Terima kasih atas\nkunjungan Anda!\n\n\n\n');
 
-  // Optional cut command
-  pushBytes(0x1D, 0x56, 0x01); // GS V 1 (Partial cut / feed)
+  // Feed lines
+  pushBytes(0x1D, 0x56, 0x01); // Feed
 
   return new Uint8Array(buffer);
 }
 
+// Global cached connection so user only pairs once
+let cachedDevice: any = null;
+let cachedWriteChar: any = null;
+
+const SUPPORTED_SERVICES = [
+  '000018f0-0000-1000-8000-00805f9b34fb',
+  'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
+  '49535343-fe7d-4ae5-8fa9-9fafd205e455',
+  '0000ff00-0000-1000-8000-00805f9b34fb',
+  '0000e0ff-0000-1000-8000-00805f9b34fb',
+  '0000ae00-0000-1000-8000-00805f9b34fb',
+  '00001800-0000-1000-8000-00805f9b34fb',
+  '00001801-0000-1000-8000-00805f9b34fb'
+];
+
 /**
- * Print directly to Bluetooth Thermal Printer using Web Bluetooth API
+ * Get current connected/remembered printer name
  */
-export async function printDirectBluetooth(transaction: Transaction): Promise<{ success: boolean; message: string }> {
+export function getSavedPrinterName(): string | null {
+  if (cachedDevice && cachedDevice.name) {
+    return cachedDevice.name;
+  }
+  return localStorage.getItem('last_paired_printer_name');
+}
+
+/**
+ * Forget remembered printer (Ganti Printer)
+ */
+export function forgetPrinter(): void {
+  try {
+    if (cachedDevice && cachedDevice.gatt && cachedDevice.gatt.connected) {
+      cachedDevice.gatt.disconnect();
+    }
+  } catch {}
+  cachedDevice = null;
+  cachedWriteChar = null;
+  localStorage.removeItem('last_paired_printer_name');
+}
+
+/**
+ * Find writable characteristic in GATT Server
+ */
+async function findWritableCharacteristic(server: any): Promise<any> {
+  const services = await server.getPrimaryServices();
+  for (const service of services) {
+    try {
+      const characteristics = await service.getCharacteristics();
+      for (const char of characteristics) {
+        if (char.properties.write || char.properties.writeWithoutResponse) {
+          return char;
+        }
+      }
+    } catch {
+      // continue checking other services
+    }
+  }
+  return null;
+}
+
+/**
+ * Connect to device and get write characteristic
+ */
+async function connectToDevice(device: any): Promise<any> {
+  let server = device.gatt;
+  if (!server.connected) {
+    server = await device.gatt.connect();
+  }
+  const char = await findWritableCharacteristic(server);
+  if (char) {
+    cachedDevice = device;
+    cachedWriteChar = char;
+    if (device.name) {
+      localStorage.setItem('last_paired_printer_name', device.name);
+    }
+    return char;
+  }
+  return null;
+}
+
+/**
+ * Print directly to Bluetooth Thermal Printer using Web Bluetooth API.
+ * Automatically remembers and reconnects to previously paired printer without prompting again!
+ */
+export async function printDirectBluetooth(
+  transaction: Transaction,
+  forceNewPairing = false
+): Promise<{ success: boolean; message: string; printerName?: string }> {
   if (!navigator || !(navigator as any).bluetooth) {
     return {
       success: false,
-      message: 'Browser ini belum mendukung Web Bluetooth. Gunakan Google Chrome di Android/PC atau gunakan tombol Cetak Browser.'
+      message: 'Browser ini belum mendukung Web Bluetooth. Gunakan Google Chrome di Android/PC.'
     };
   }
 
+  const bluetooth = (navigator as any).bluetooth;
+
   try {
-    const bluetooth = (navigator as any).bluetooth;
+    let writeChar = cachedWriteChar;
 
-    // Common standard services for 58mm / 80mm Bluetooth ESC/POS printers
-    const device = await bluetooth.requestDevice({
-      acceptAllDevices: true,
-      optionalServices: [
-        '000018f0-0000-1000-8000-00805f9b34fb',
-        'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
-        '49535343-fe7d-4ae5-8fa9-9fafd205e455',
-        '0000ff00-0000-1000-8000-00805f9b34fb',
-        '0000e0ff-0000-1000-8000-00805f9b34fb',
-        '0000ae00-0000-1000-8000-00805f9b34fb',
-        '00001800-0000-1000-8000-00805f9b34fb',
-        '00001801-0000-1000-8000-00805f9b34fb'
-      ]
-    });
-
-    if (!device || !device.gatt) {
-      return { success: false, message: 'Printer Bluetooth tidak dipilih.' };
+    // 1. Try reusing active cached connection
+    if (!forceNewPairing && cachedDevice && cachedDevice.gatt) {
+      try {
+        if (cachedDevice.gatt.connected && writeChar) {
+          // Connection is active and ready
+        } else {
+          // Reconnect to remembered device silently (no popup!)
+          writeChar = await connectToDevice(cachedDevice);
+        }
+      } catch {
+        writeChar = null;
+      }
     }
 
-    const server = await device.gatt.connect();
-
-    // Generate binary ESC/POS data
-    const data = generateEscPosReceipt(transaction);
-
-    // Find writable characteristic in all available services
-    const services = await server.getPrimaryServices();
-    let writeChar: any = null;
-
-    for (const service of services) {
+    // 2. Try retrieving already permitted devices from browser (Chrome getDevices)
+    if (!writeChar && !forceNewPairing && bluetooth.getDevices) {
       try {
-        const characteristics = await service.getCharacteristics();
-        for (const char of characteristics) {
-          if (char.properties.write || char.properties.writeWithoutResponse) {
-            writeChar = char;
-            break;
+        const permittedDevices = await bluetooth.getDevices();
+        if (permittedDevices && permittedDevices.length > 0) {
+          const lastUsedName = localStorage.getItem('last_paired_printer_name');
+          const targetDevice = (lastUsedName && permittedDevices.find((d: any) => d.name === lastUsedName)) || permittedDevices[0];
+          if (targetDevice) {
+            writeChar = await connectToDevice(targetDevice);
           }
         }
-        if (writeChar) break;
       } catch {
-        // continue search
+        writeChar = null;
       }
+    }
+
+    // 3. If no active connection or user explicitly clicked "Ganti Printer", request pairing dialog
+    if (!writeChar || forceNewPairing) {
+      const device = await bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: SUPPORTED_SERVICES
+      });
+
+      if (!device || !device.gatt) {
+        return { success: false, message: 'Printer Bluetooth tidak dipilih.' };
+      }
+
+      writeChar = await connectToDevice(device);
     }
 
     if (!writeChar) {
       return {
         success: false,
-        message: 'Karakteristik cetak printer tidak ditemukan pada perangkat Bluetooth ini.'
+        message: 'Tidak dapat menemukan jalur kirim data ke printer Bluetooth.'
       };
     }
 
-    // Send in chunks (max 128-512 bytes per packet for Bluetooth LE reliability)
-    const CHUNK_SIZE = 128;
+    // 4. Generate binary ESC/POS data and send
+    const data = generateEscPosReceipt(transaction);
+    const CHUNK_SIZE = 128; // safe packet size for Bluetooth LE
+
     for (let i = 0; i < data.length; i += CHUNK_SIZE) {
       const chunk = data.slice(i, i + CHUNK_SIZE);
       if (writeChar.writeValueWithResponse) {
@@ -161,18 +249,19 @@ export async function printDirectBluetooth(transaction: Transaction): Promise<{ 
       }
     }
 
-    // Disconnect cleanly after print
-    setTimeout(() => {
-      try {
-        if (device.gatt.connected) device.gatt.disconnect();
-      } catch {}
-    }, 1000);
-
-    return { success: true, message: 'Struk berhasil dicetak ke printer Bluetooth!' };
+    // Keep connection alive for instant next print!
+    const printerName = cachedDevice?.name || 'Printer Bluetooth';
+    return {
+      success: true,
+      message: `Struk berhasil dicetak ke ${printerName}!`,
+      printerName
+    };
   } catch (err: any) {
     if (err.name === 'NotFoundError' || err.message?.includes('User cancelled')) {
       return { success: false, message: 'Pemilihan printer Bluetooth dibatalkan.' };
     }
+    // If error, reset cached writeChar so next attempt can recover
+    cachedWriteChar = null;
     return {
       success: false,
       message: err.message || 'Gagal mengirim data ke printer Bluetooth.'

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Transaction } from '../types';
 import { useTheme } from '../context/ThemeContext';
-import { Printer, CheckCircle, X, Bluetooth, AlertCircle, HelpCircle, Check } from 'lucide-react';
-import { printDirectBluetooth } from '../utils/bluetoothPrinter';
+import { Printer, CheckCircle, X, Bluetooth, AlertCircle, HelpCircle, Check, RefreshCw } from 'lucide-react';
+import { printDirectBluetooth, getSavedPrinterName, forgetPrinter } from '../utils/bluetoothPrinter';
 
 interface ReceiptModalProps {
   transaction: Transaction | null;
@@ -15,6 +15,11 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ transaction, onClose
   const [isPrintingBt, setIsPrintingBt] = useState(false);
   const [printStatus, setPrintStatus] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
   const [showHelp, setShowHelp] = useState(false);
+  const [savedPrinter, setSavedPrinter] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSavedPrinter(getSavedPrinterName());
+  }, [transaction]);
 
   if (!transaction) return null;
 
@@ -22,20 +27,31 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ transaction, onClose
     window.print();
   };
 
-  const handlePrintBluetooth = async () => {
+  const handlePrintBluetooth = async (forceNew = false) => {
     setIsPrintingBt(true);
-    setPrintStatus({ type: 'info', text: 'Menghubungkan ke printer Bluetooth...' });
+    setPrintStatus({
+      type: 'info',
+      text: forceNew ? 'Mencari printer Bluetooth baru...' : 'Mengirim data ke printer...'
+    });
 
-    const res = await printDirectBluetooth(transaction);
+    const res = await printDirectBluetooth(transaction, forceNew);
     setIsPrintingBt(false);
 
     if (res.success) {
       playSound('success');
+      setSavedPrinter(getSavedPrinterName());
       setPrintStatus({ type: 'success', text: res.message });
       setTimeout(() => setPrintStatus(null), 4000);
     } else {
       setPrintStatus({ type: 'error', text: res.message });
     }
+  };
+
+  const handleForgetPrinter = () => {
+    forgetPrinter();
+    setSavedPrinter(null);
+    setPrintStatus({ type: 'info', text: 'Memori printer direset. Silakan pilih printer baru saat mencetak.' });
+    setTimeout(() => setPrintStatus(null), 3000);
   };
 
   const formattedDate = transaction.created_at
@@ -83,6 +99,25 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ transaction, onClose
                 <Bluetooth className="w-4 h-4 text-blue-600 animate-pulse shrink-0" />
               )}
               <span className="truncate">{printStatus.text}</span>
+            </div>
+          )}
+
+          {/* Saved Printer Bar if paired */}
+          {savedPrinter && (
+            <div className="mx-4 mt-2 px-3 py-1.5 bg-slate-100 rounded-xl flex items-center justify-between text-[11px] text-slate-600 font-bold border border-slate-200/70">
+              <div className="flex items-center gap-1.5 truncate">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping shrink-0" />
+                <span className="truncate">Printer: <strong>{savedPrinter}</strong></span>
+              </div>
+              <button
+                type="button"
+                onClick={handleForgetPrinter}
+                className="text-[10px] text-blue-600 hover:text-blue-800 underline ml-2 shrink-0 flex items-center gap-0.5"
+                title="Ganti ke perangkat Bluetooth lain"
+              >
+                <RefreshCw className="w-2.5 h-2.5" />
+                <span>Ganti</span>
+              </button>
             </div>
           )}
 
@@ -144,18 +179,14 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ transaction, onClose
                 className="w-full text-center text-[11px] font-bold text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1 py-1 transition-colors"
               >
                 <HelpCircle className="w-3.5 h-3.5" />
-                <span>{showHelp ? 'Sembunyikan panduan print' : 'Cara hubungkan printer thermal?'}</span>
+                <span>{showHelp ? 'Sembunyikan info' : 'Cara print otomatis tanpa pairing ulang?'}</span>
               </button>
 
               {showHelp && (
                 <div className="mt-2 p-3 bg-white rounded-2xl border border-slate-200 text-[11px] text-slate-600 space-y-1.5 animate-slide-up">
-                  <p className="font-bold text-slate-800">📱 Cetak Langsung di HP Android:</p>
-                  <p>1. Nyalakan printer Bluetooth.</p>
-                  <p>2. Klik tombol biru <strong>"Cetak Bluetooth (Langsung)"</strong> di bawah.</p>
-                  <p>3. Pilih nama printer Anda (misal: <em>MPT-II / POS-58</em>).</p>
-                  <p className="pt-1 text-[10px] text-slate-400">
-                    *Atau jika via Cetak Browser, pasang aplikasi gratis <strong>RawBT Print Service</strong> dari Play Store.
-                  </p>
+                  <p className="font-bold text-slate-800">⚡ Print Otomatis Sekali Klik:</p>
+                  <p>1. Cukup klik tombol biru <strong>Cetak Bluetooth</strong> dan hubungkan printer sekali saja.</p>
+                  <p>2. Printer akan otomatis tersimpan. Setiap transaksi berikutnya langsung tercetak tanpa muncul pop-up pairing lagi!</p>
                 </div>
               )}
             </div>
@@ -163,15 +194,21 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ transaction, onClose
 
           {/* Modal Action Buttons */}
           <div className="p-3.5 bg-white border-t border-slate-100 flex flex-col gap-2">
-            {/* Primary Direct Bluetooth Print */}
+            {/* Primary Direct Bluetooth Print (Auto-remembered, 1-Click) */}
             <button
               type="button"
-              onClick={handlePrintBluetooth}
+              onClick={() => handlePrintBluetooth(false)}
               disabled={isPrintingBt}
               className="w-full py-3 px-3 rounded-2xl font-black text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-btn flex items-center justify-center gap-2 transition-all active:scale-98"
             >
               <Bluetooth className={`w-4 h-4 ${isPrintingBt ? 'animate-spin' : ''}`} />
-              <span>{isPrintingBt ? 'Mencetak ke Bluetooth...' : 'Cetak Bluetooth (Langsung)'}</span>
+              <span>
+                {isPrintingBt
+                  ? 'Mencetak ke Bluetooth...'
+                  : savedPrinter
+                  ? `Cetak Langsung (${savedPrinter})`
+                  : 'Cetak Bluetooth (Hubungkan Sekali)'}
+              </span>
             </button>
 
             <div className="flex gap-2">
