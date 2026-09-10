@@ -44,6 +44,10 @@ export function generateEscPosReceipt(transaction: Transaction): Uint8Array {
     : new Date().toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' });
   pushText(dateStr + '\n');
 
+  // Customer Name directly under date
+  const customerName = transaction.customer_name || 'Pelanggan';
+  pushText(customerName + '\n');
+
   // Dotted divider (32 chars for 58mm)
   pushText('--------------------------------\n');
 
@@ -76,9 +80,12 @@ export function generateEscPosReceipt(transaction: Transaction): Uint8Array {
   // Divider
   pushText('--------------------------------\n');
 
-  // 5. Footer & Paper Feed
+  // 5. Footer (Maturnuwun & Doa Berkah)
   pushBytes(0x1B, 0x61, 0x01); // Center
-  pushText('Terima kasih atas\nkunjungan Anda!\n\n\n\n');
+  pushBytes(0x1B, 0x45, 0x01); // Bold on
+  pushText('Maturnuwun\n');
+  pushBytes(0x1B, 0x45, 0x00); // Bold off
+  pushText('Semoga Kita Selalu Diberi\nKesehatan, Rejekinya Lancar\nDan Umur Yang Barokah\n\n\n\n');
 
   // Feed lines
   pushBytes(0x1D, 0x56, 0x01); // Feed

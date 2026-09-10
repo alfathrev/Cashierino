@@ -132,6 +132,9 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ transaction, onClose
                 <p className="text-[10px] text-slate-500 font-sans mt-0.5">
                   {formattedDate}
                 </p>
+                <p className="text-xs font-bold text-slate-800 font-sans mt-0.5">
+                  {transaction.customer_name || 'Pelanggan Walk-In'}
+                </p>
               </div>
 
               {/* Order Items List */}
@@ -165,9 +168,12 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ transaction, onClose
                 </div>
               </div>
 
-              {/* Simple Footer */}
-              <div className="pt-2 text-center text-slate-600 font-sans text-[11px] font-medium">
-                <p>Terima kasih atas kunjungan Anda!</p>
+              {/* Maturnuwun Footer */}
+              <div className="pt-2 text-center text-slate-700 font-sans space-y-0.5">
+                <p className="font-black text-xs text-slate-900">Maturnuwun</p>
+                <p className="text-[10px] text-slate-500 leading-snug">
+                  Semoga Kita Selalu Diberi Kesehatan, Rejekinya Lancar Dan Umur Yang Barokah
+                </p>
               </div>
             </div>
 
@@ -242,6 +248,9 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ transaction, onClose
           <div className="thermal-center text-xs thermal-mb">
             {formattedDate}
           </div>
+          <div className="thermal-center font-bold text-xs thermal-mb">
+            {transaction.customer_name || 'Pelanggan'}
+          </div>
 
           {/* Dotted Divider */}
           <div className="thermal-divider">--------------------------------</div>
@@ -283,9 +292,12 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ transaction, onClose
           {/* Dotted Divider */}
           <div className="thermal-divider">--------------------------------</div>
 
-          {/* Footer */}
-          <div className="thermal-center text-xs thermal-mt">
-            Terima kasih atas kunjungan Anda!
+          {/* Footer Maturnuwun */}
+          <div className="thermal-center font-bold text-xs thermal-mt">
+            Maturnuwun
+          </div>
+          <div className="thermal-center text-[9.5px]">
+            Semoga Kita Selalu Diberi Kesehatan, Rejekinya Lancar Dan Umur Yang Barokah
           </div>
           <div className="thermal-feed-space">&nbsp;</div>
         </div>
