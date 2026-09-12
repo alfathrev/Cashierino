@@ -39,6 +39,8 @@ export function generateEscPosReceipt(transaction: Transaction): Uint8Array {
 
   // Reset font size
   pushBytes(0x1B, 0x21, 0x00); // Normal font
+  pushText('+62 857-2799-2282\n');
+
   const dateStr = transaction.created_at
     ? new Date(transaction.created_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })
     : new Date().toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' });

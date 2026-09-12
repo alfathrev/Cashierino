@@ -129,6 +129,9 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ transaction, onClose
                 <h2 className="font-sans font-black text-xl tracking-tight text-slate-900">
                   Ino Yummy
                 </h2>
+                <p className="text-[11px] font-bold text-slate-600 font-mono mt-0.5">
+                  +62 857-2799-2282
+                </p>
                 <p className="text-[10px] text-slate-500 font-sans mt-0.5">
                   {formattedDate}
                 </p>
@@ -244,6 +247,9 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ transaction, onClose
           {/* Header */}
           <div className="thermal-center font-bold text-base thermal-mb">
             Ino Yummy
+          </div>
+          <div className="thermal-center font-mono text-xs thermal-mb">
+            +62 857-2799-2282
           </div>
           <div className="thermal-center text-xs thermal-mb">
             {formattedDate}
